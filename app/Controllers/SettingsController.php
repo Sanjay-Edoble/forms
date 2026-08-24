@@ -16,7 +16,7 @@ class SettingsController
         $settings = json_decode($form['settings'] ?? '{}', true);
         $theme = json_decode($form['theme'] ?? '{}', true);
 
-        echo view('settings.form', [
+        echo view('forms.settings', [
             'pageTitle' => 'Settings: ' . ($form['title'] ?? 'Untitled'),
             'form'      => $form,
             'settings'  => $settings,
