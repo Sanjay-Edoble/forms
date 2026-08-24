@@ -32,6 +32,7 @@ $router->get('/', function() {
 
 // Public form
 $router->get('/f/{id}', [PublicFormController::class, 'show']);
+$router->post('/f/{id}/gate', [PublicFormController::class, 'gate']);
 $router->post('/f/{id}/submit', [PublicFormController::class, 'submit']);
 
 // Embed
@@ -66,7 +67,7 @@ $router->group(['middleware' => [AuthMiddleware::class, CSRFMiddleware::class]],
     // Forms
     $router->get('/forms', [FormController::class, 'index']);
     $router->get('/forms/create', [FormController::class, 'create']);
-    $router->get('/forms/{id}', function($id) { redirect('/f/' . $id); });
+    $router->get('/forms/{id}', function($req, $params) { redirect('/f/' . $params['id']); });
     $router->post('/forms', [FormController::class, 'store']);
     $router->post('/forms/{id}/duplicate', [FormController::class, 'duplicate']);
     $router->post('/forms/{id}/delete', [FormController::class, 'delete']);

@@ -16,66 +16,45 @@
     
     <div class="edf-card mb-3">
         <div class="edf-card-header">
-            <h3 class="edf-card-title">Responses</h3>
+            <h3 class="edf-card-title">Access Control & Limits</h3>
         </div>
         <div class="edf-card-body">
-            <form method="POST" action="/api/forms/<?= $form['id'] ?>/settings/responses" onsubmit="saveSettings(event, this)">
+            <form method="POST" action="/forms/<?= $form['id'] ?>/settings">
                 <?= csrf_field() ?>
+                
+                <?php $error = get_flash('error'); if ($error): ?><div class="edf-alert error" style="margin-bottom:16px;color:#ef4444;"><?= e($error) ?></div><?php endif; ?>
+                <?php $success = get_flash('success'); if ($success): ?><div class="edf-alert success" style="margin-bottom:16px;color:#10b981;"><?= e($success) ?></div><?php endif; ?>
+
+                <div class="d-flex justify-between align-center mb-3 pb-3" style="border-bottom:1px solid var(--edf-border);">
+                    <div>
+                        <div style="font-weight:600;">Require Email to Start</div>
+                        <div class="edf-form-help">Respondents must provide an email before seeing the form questions.</div>
+                    </div>
+                    <label class="edf-toggle">
+                        <input type="checkbox" name="require_email" value="1" <?= !empty($settings['require_email']) ? 'checked' : '' ?>>
+                        <div class="edf-toggle-track"></div>
+                    </label>
+                </div>
                 
                 <div class="d-flex justify-between align-center mb-3 pb-3" style="border-bottom:1px solid var(--edf-border);">
                     <div>
-                        <div style="font-weight:600;">Collect email addresses</div>
-                        <div class="edf-form-help">Require respondents to sign in or provide email</div>
+                        <div style="font-weight:600;">Limit to 1 response per email</div>
+                        <div class="edf-form-help">Requires "Require Email to Start" to be enabled.</div>
                     </div>
                     <label class="edf-toggle">
-                        <input type="checkbox" name="collect_email" <?= !empty($settings['collect_email']) ? 'checked' : '' ?>>
+                        <input type="checkbox" name="limit_one_response" value="1" <?= !empty($settings['limit_one_response']) ? 'checked' : '' ?>>
                         <div class="edf-toggle-track"></div>
                     </label>
                 </div>
                 
-                <div class="d-flex justify-between align-center mb-3 pb-3" style="border-bottom:1px solid var(--edf-border);">
-                    <div>
-                        <div style="font-weight:600;">Limit to 1 response</div>
-                        <div class="edf-form-help">Requires sign-in</div>
-                    </div>
-                    <label class="edf-toggle">
-                        <input type="checkbox" name="limit_one_response" <?= !empty($settings['limit_one_response']) ? 'checked' : '' ?>>
-                        <div class="edf-toggle-track"></div>
-                    </label>
-                </div>
-                
-                <div class="d-flex justify-between align-center">
-                    <div>
-                        <div style="font-weight:600;">Allow response editing</div>
-                        <div class="edf-form-help">Respondents can change their answers after submitting</div>
-                    </div>
-                    <label class="edf-toggle">
-                        <input type="checkbox" name="allow_edit" <?= !empty($settings['allow_edit']) ? 'checked' : '' ?>>
-                        <div class="edf-toggle-track"></div>
-                    </label>
-                </div>
-                
-                <div class="mt-3 text-right">
-                    <button type="submit" class="edf-btn edf-btn-primary">Save Changes</button>
-                </div>
-            </form>
-        </div>
-    </div>
-    
-    <div class="edf-card mb-3">
-        <div class="edf-card-header">
-            <h3 class="edf-card-title">Presentation</h3>
-        </div>
-        <div class="edf-card-body">
-            <form method="POST" action="/api/forms/<?= $form['id'] ?>/settings/presentation" onsubmit="saveSettings(event, this)">
-                <?= csrf_field() ?>
+                <h3 class="edf-card-title mt-4 mb-3">Presentation</h3>
                 
                 <div class="d-flex justify-between align-center mb-3 pb-3" style="border-bottom:1px solid var(--edf-border);">
                     <div>
                         <div style="font-weight:600;">Show progress bar</div>
                     </div>
                     <label class="edf-toggle">
-                        <input type="checkbox" name="show_progress" <?= !empty($settings['show_progress']) ? 'checked' : '' ?>>
+                        <input type="checkbox" name="show_progress" value="1" <?= !empty($settings['show_progress']) ? 'checked' : '' ?>>
                         <div class="edf-toggle-track"></div>
                     </label>
                 </div>
@@ -85,7 +64,7 @@
                         <div style="font-weight:600;">Shuffle question order</div>
                     </div>
                     <label class="edf-toggle">
-                        <input type="checkbox" name="shuffle_questions" <?= !empty($settings['shuffle_questions']) ? 'checked' : '' ?>>
+                        <input type="checkbox" name="shuffle_questions" value="1" <?= !empty($settings['shuffle_questions']) ? 'checked' : '' ?>>
                         <div class="edf-toggle-track"></div>
                     </label>
                 </div>
@@ -96,35 +75,10 @@
                 </div>
                 
                 <div class="mt-3 text-right">
-                    <button type="submit" class="edf-btn edf-btn-primary">Save Changes</button>
+                    <button type="submit" class="edf-btn edf-btn-primary">Save Settings</button>
                 </div>
             </form>
         </div>
     </div>
-</div>
-
-<script>
-async function saveSettings(e, form) {
-    e.preventDefault();
-    const btn = form.querySelector('button[type="submit"]');
-    const ogText = btn.innerHTML;
-    btn.innerHTML = 'Saving...';
-    btn.disabled = true;
-    
-    // Fake saving to demonstrate UI feedback (In reality it would hit Edobase)
-    const formData = new FormData(form);
-    const data = Object.fromEntries(formData.entries());
-    
-    try {
-        const res = await Edoble.fetch(form.action, { method: 'POST', body: data });
-        Edoble.toast('Settings saved', 'success');
-    } catch(err) {
-        Edoble.toast('Settings saved (Mock)', 'success');
-    }
-    
-    btn.innerHTML = ogText;
-    btn.disabled = false;
-}
-</script>
 
 <?php \App\Core\View::endSection(); ?>

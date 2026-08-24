@@ -29,16 +29,11 @@ class SettingsController
     {
         $formService = new FormService();
         $settings = [
-            'collect_email'        => (bool) $request->input('collect_email'),
-            'allow_multiple'       => (bool) $request->input('allow_multiple'),
+            'require_email'        => (bool) $request->input('require_email'),
+            'limit_one_response'   => (bool) $request->input('limit_one_response'),
             'show_progress'        => (bool) $request->input('show_progress'),
-            'require_login'        => (bool) $request->input('require_login'),
             'shuffle_questions'    => (bool) $request->input('shuffle_questions'),
             'confirmation_message' => $request->input('confirmation_message', 'Your response has been recorded.'),
-            'notify_on_submit'     => (bool) $request->input('notify_on_submit'),
-            'notify_email'         => $request->input('notify_email', ''),
-            'start_date'           => $request->input('start_date') ?: null,
-            'end_date'             => $request->input('end_date') ?: null,
         ];
 
         $formService->updateSettings($params['id'], $settings);

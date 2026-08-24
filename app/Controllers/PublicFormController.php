@@ -35,7 +35,6 @@ class PublicFormController
             exit;
         }
 
-        // Check schedule
         $settings = json_decode($form['settings'] ?? '{}', true);
         $now = date('Y-m-d H:i:s');
         if (!empty($settings['start_date']) && $now < $settings['start_date']) {
@@ -45,6 +44,29 @@ class PublicFormController
         if (!empty($settings['end_date']) && $now > $settings['end_date']) {
             echo view('forms.closed', ['message' => 'This form is no longer accepting responses.'], 'layouts.public');
             exit;
+        }
+
+        // Access Control: Require Email
+        if (!empty($settings['require_email'])) {
+            $sessionKey = 'form_' . $params['id'] . '_email';
+            $respondentEmail = $_SESSION[$sessionKey] ?? null;
+
+            if (!$respondentEmail) {
+                echo view('forms.gate', ['form' => $form], 'layouts.public');
+                exit;
+            }
+
+            // If limited to 1 response, check if this email already submitted
+            if (!empty($settings['limit_one_response'])) {
+                $existing = $this->responseService->list($params['id'], [
+                    'filter[email]' => $respondentEmail,
+                    'limit' => 1,
+                ]);
+                if (!empty($existing['data'])) {
+                    echo view('forms.closed', ['message' => 'You have already responded to this form. Multiple submissions are not allowed.'], 'layouts.public');
+                    exit;
+                }
+            }
         }
 
         $schema = json_decode($form['schema'] ?? '{}', true);
@@ -57,6 +79,18 @@ class PublicFormController
             'theme'    => $theme,
         ], 'layouts.public');
         exit;
+    }
+
+    /**
+     * Handle email gate submission.
+     */
+    public function gate(Request $request, array $params): void
+    {
+        $email = $request->input('respondent_email');
+        if ($email) {
+            $_SESSION['form_' . $params['id'] . '_email'] = filter_var($email, FILTER_SANITIZE_EMAIL);
+        }
+        redirect("/f/{$params['id']}");
     }
 
     /**
@@ -98,24 +132,40 @@ class PublicFormController
         }
 
         // Check for duplicate submissions
-        if (!($settings['allow_multiple'] ?? true)) {
+        $sessionEmail = $_SESSION['form_' . $formId . '_email'] ?? null;
+        
+        if (!empty($settings['limit_one_response'])) {
+            if (!$sessionEmail) {
+                if ($request->isAjax()) Response::json(['success' => false, 'message' => 'Email is required to submit this form.'], 403);
+                flash('error', 'Email is required to submit this form.');
+                redirect("/f/{$formId}");
+            }
+            
+            $existing = $this->responseService->list($formId, [
+                'filter[email]' => $sessionEmail,
+                'limit' => 1,
+            ]);
+            if (!empty($existing['data'])) {
+                if ($request->isAjax()) Response::json(['success' => false, 'message' => 'You have already submitted a response.'], 409);
+                flash('error', 'You have already submitted a response to this form.');
+                redirect("/f/{$formId}");
+            }
+        } elseif (!($settings['allow_multiple'] ?? true)) {
+            // Old IP-based check as fallback if limit_one_response is not strictly used via email
             $ipHash = hash('sha256', $request->ip() . ':' . $formId);
-            // Simple check — could be improved with cookies/auth
             $existing = $this->responseService->list($formId, [
                 'filter[ip_hash]' => $ipHash,
                 'limit' => 1,
             ]);
             if (!empty($existing['data'])) {
-                if ($request->isAjax()) {
-                    Response::json(['success' => false, 'message' => 'You have already submitted a response.'], 409);
-                }
+                if ($request->isAjax()) Response::json(['success' => false, 'message' => 'You have already submitted a response.'], 409);
                 flash('error', 'You have already submitted a response to this form.');
                 redirect("/f/{$formId}");
             }
         }
 
         $ipHash = hash('sha256', $request->ip() . ':' . $formId);
-        $email = $answers['_email'] ?? ($settings['collect_email'] ? ($answers['email'] ?? null) : null);
+        $email = $sessionEmail ?? $answers['_email'] ?? ($settings['collect_email'] ? ($answers['email'] ?? null) : null);
 
         $result = $this->responseService->submit(
             $formId,
