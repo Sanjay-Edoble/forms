@@ -28,7 +28,9 @@ class View
 
         // If a layout was set during rendering (via extend()), wrap in layout
         if (self::$layoutName) {
-            self::$sections['content'] = $content;
+            if (!isset(self::$sections['content']) || trim((string)self::$sections['content']) === '' && trim($content) !== '') {
+                self::$sections['content'] = $content;
+            }
             $layoutData = array_merge($data, ['sections' => self::$sections]);
             return self::renderFile(self::$layoutName, $layoutData);
         }
