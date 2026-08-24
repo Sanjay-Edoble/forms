@@ -66,6 +66,7 @@ $router->group(['middleware' => [AuthMiddleware::class, CSRFMiddleware::class]],
     // Forms
     $router->get('/forms', [FormController::class, 'index']);
     $router->get('/forms/create', [FormController::class, 'create']);
+    $router->get('/forms/{id}', function($id) { redirect('/f/' . $id); });
     $router->post('/forms', [FormController::class, 'store']);
     $router->post('/forms/{id}/duplicate', [FormController::class, 'duplicate']);
     $router->post('/forms/{id}/delete', [FormController::class, 'delete']);
