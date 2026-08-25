@@ -59,7 +59,7 @@ class PublicFormController
             // If limited to 1 response, check if this email already submitted
             if (!empty($settings['limit_one_response'])) {
                 $existing = $this->responseService->list($params['id'], [
-                    'filter[email]' => $respondentEmail,
+                    'filter[respondent_email]' => $respondentEmail,
                     'limit' => 1,
                 ]);
                 if (!empty($existing['data'])) {
@@ -142,7 +142,7 @@ class PublicFormController
             }
             
             $existing = $this->responseService->list($formId, [
-                'filter[email]' => $sessionEmail,
+                'filter[respondent_email]' => $sessionEmail,
                 'limit' => 1,
             ]);
             if (!empty($existing['data'])) {

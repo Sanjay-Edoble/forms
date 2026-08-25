@@ -27,7 +27,7 @@ class AnalyticsController
         $responses = $responseService->getAllForExport($params['id']);
         $questionsData = $this->aggregateQuestionData($schema, $responses);
 
-        echo view('analytics.index', [
+        echo view('forms.analytics', [
             'pageTitle'     => 'Analytics: ' . ($form['title'] ?? 'Untitled'),
             'form'          => $form,
             'schema'        => $schema,
