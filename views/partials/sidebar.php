@@ -13,6 +13,28 @@ $navItems = [
         <div class="brand-icon">E</div>
         <span>Edoble <span style="font-weight:400;color:var(--edf-text-muted);">Forms</span></span>
     </a>
+    
+    <?php if (is_authenticated()): ?>
+    <?php
+        $workspaces = \App\Core\Session::get('workspaces') ?? [];
+        $currentWorkspaceId = \App\Core\Session::get('current_workspace_id');
+        if (!empty($workspaces)):
+    ?>
+    <div style="padding: 0 16px 16px 16px; border-bottom: 1px solid var(--edf-border); margin-bottom: 16px;">
+        <form action="/workspace/switch" method="POST" id="workspace-switcher-form">
+            <?= csrf_field() ?>
+            <select name="workspace_id" class="edf-input" style="width:100%; padding: 8px;" onchange="document.getElementById('workspace-switcher-form').submit()">
+                <?php foreach ($workspaces as $w): ?>
+                <option value="<?= e($w['id']) ?>" <?= $w['id'] === $currentWorkspaceId ? 'selected' : '' ?>>
+                    <?= e($w['name']) ?>
+                </option>
+                <?php endforeach; ?>
+            </select>
+        </form>
+    </div>
+    <?php endif; ?>
+    <?php endif; ?>
+    
     <nav class="edf-sidebar-nav">
         <div class="edf-sidebar-section">
             <div class="edf-sidebar-title">Main</div>

@@ -23,6 +23,11 @@ class FormService
     public function create(string $title, string $description = ''): array
     {
         $user = Session::get('user');
+        $workspaceId = Session::get('current_workspace_id');
+        if (!$workspaceId) {
+            // Fallback for missing workspace
+            $workspaceId = $user['id'];
+        }
         $formId = generate_id('frm_');
 
         $form = [
@@ -31,7 +36,8 @@ class FormService
             'description' => $description,
             'status'      => 'draft',
             'version'     => 1,
-            'owner_id'    => $user['id'],
+            'owner_id'    => $user['id'], // Keep owner_id for tracking who created it
+            'workspace_id'=> $workspaceId,
             'owner_name'  => $user['display_name'] ?? $user['email'],
             'schema'      => json_encode([
                 'questions' => [],
@@ -40,7 +46,10 @@ class FormService
                 ],
             ]),
             'settings'    => json_encode([
-                'collect_email'    => false,
+                'collect_email'    => true,
+                'require_email'    => true,
+                'verify_email_magic_link' => true,
+                'limit_one_response' => false,
                 'allow_multiple'   => true,
                 'show_progress'    => false,
                 'require_login'    => false,
@@ -48,6 +57,7 @@ class FormService
                 'confirmation_message' => 'Your response has been recorded.',
                 'notify_on_submit' => false,
                 'notify_email'     => $user['email'],
+                'webhook_url'      => '',
                 'start_date'       => null,
                 'end_date'         => null,
             ]),
@@ -80,6 +90,7 @@ class FormService
     public function createFromTemplate(array $template): array
     {
         $user = Session::get('user');
+        $workspaceId = Session::get('current_workspace_id') ?? $user['id'];
         $formId = generate_id('frm_');
 
         $form = [
@@ -89,6 +100,7 @@ class FormService
             'status'         => 'draft',
             'version'        => 1,
             'owner_id'       => $user['id'],
+            'workspace_id'   => $workspaceId,
             'owner_name'     => $user['display_name'] ?? $user['email'],
             'schema'         => $template['schema'] ?? '{"questions":[],"sections":[]}',
             'settings'       => $template['settings'] ?? '{}',
@@ -143,8 +155,9 @@ class FormService
     public function listForUser(array $params = []): array
     {
         $user = Session::get('user');
+        $workspaceId = Session::get('current_workspace_id') ?? $user['id'];
         $defaults = [
-            'filter[owner_id]' => $user['id'],
+            'filter[workspace_id]' => $workspaceId,
             'sort'             => 'updated_at',
             'order'            => 'desc',
             'limit'            => 20,
@@ -167,8 +180,9 @@ class FormService
     public function listTrashed(array $params = []): array
     {
         $user = Session::get('user');
+        $workspaceId = Session::get('current_workspace_id') ?? $user['id'];
         $defaults = [
-            'filter[owner_id]' => $user['id'],
+            'filter[workspace_id]' => $workspaceId,
             'filter[status]'   => 'deleted',
             'sort'             => 'updated_at',
             'order'            => 'desc',
@@ -280,6 +294,20 @@ class FormService
     }
 
     /**
+     * Empty the trash for the current workspace.
+     */
+    public function emptyTrash(): void
+    {
+        $trashed = $this->listTrashed(['limit' => 1000]);
+        if (!empty($trashed['data'])) {
+            foreach ($trashed['data'] as $form) {
+                $this->permanentDelete($form['id']);
+            }
+            Logger::info('Trash emptied', ['count' => count($trashed['data'])]);
+        }
+    }
+
+    /**
      * Increment the response count for a form.
      */
     public function incrementResponseCount(string $formId): void
@@ -299,11 +327,12 @@ class FormService
     public function getDashboardStats(): array
     {
         $user = Session::get('user');
+        $workspaceId = Session::get('current_workspace_id') ?? $user['id'];
 
-        // Get all forms for the user
+        // Get all forms for the workspace
         $allForms = $this->client->listDocuments('forms', [
-            'filter[owner_id]'    => $user['id'],
-            'filter[status][ne]'  => 'deleted',
+            'filter[workspace_id]' => $workspaceId,
+            'filter[status][ne]'   => 'deleted',
             'limit'               => 100,
         ]);
 

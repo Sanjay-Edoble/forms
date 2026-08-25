@@ -198,6 +198,16 @@ if (!function_exists('current_user')) {
     }
 }
 
+if (!function_exists('current_user_role')) {
+    /**
+     * Get the current user's role in the active workspace.
+     */
+    function current_user_role(): string
+    {
+        return \App\Core\Session::get('current_workspace_role', 'admin');
+    }
+}
+
 if (!function_exists('generate_id')) {
     /**
      * Generate a short unique ID for forms, questions, etc.

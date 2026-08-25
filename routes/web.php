@@ -60,9 +60,11 @@ $router->post('/logout', [AuthController::class, 'logout']);
 // ─── Authenticated Routes ─────────────────────────────────────
 
 $router->group(['middleware' => [AuthMiddleware::class, CSRFMiddleware::class]], function($router) {
-    
     // Dashboard
     $router->get('/dashboard', [DashboardController::class, 'index']);
+    
+    // Workspaces
+    $router->post('/workspace/switch', [\App\Controllers\WorkspaceController::class, 'switchWorkspace']);
 
     // Forms
     $router->get('/forms', [FormController::class, 'index']);
@@ -106,12 +108,17 @@ $router->group(['middleware' => [AuthMiddleware::class, CSRFMiddleware::class]],
 
     // Trash
     $router->get('/trash', [TrashController::class, 'index']);
+    $router->post('/trash/empty', [TrashController::class, 'emptyTrash']);
     $router->post('/trash/{id}/restore', [TrashController::class, 'restore']);
     $router->post('/trash/{id}/delete', [TrashController::class, 'permanentDelete']);
 
     // Account Settings
     $router->get('/settings', [SettingsController::class, 'accountSettings']);
     $router->post('/settings', [SettingsController::class, 'updateAccountSettings']);
+    $router->get('/settings/workspaces', [SettingsController::class, 'workspaces']);
+    $router->post('/settings/workspaces', [SettingsController::class, 'createWorkspace']);
+    $router->post('/settings/workspaces/switch/{id}', [SettingsController::class, 'switchWorkspace']);
+    $router->post('/settings/workspaces/{id}/invite', [SettingsController::class, 'inviteMember']);
 });
 
 // ─── Admin Routes ─────────────────────────────────────────────

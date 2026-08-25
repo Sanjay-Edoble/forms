@@ -39,4 +39,11 @@ class TrashController
         flash('success', 'Form permanently deleted.');
         redirect('/trash');
     }
+
+    public function emptyTrash(Request $request, array $params): void
+    {
+        $this->formService->emptyTrash();
+        flash('success', 'Trash has been emptied.');
+        redirect('/trash');
+    }
 }

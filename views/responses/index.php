@@ -94,6 +94,9 @@ const app = Vue.createApp({
                 { 
                     headerName: "Timestamp", field: "submitted_at", sortable: true, filter: 'agDateColumnFilter', width: 180,
                     valueFormatter: params => new Date(params.value).toLocaleString() 
+                },
+                {
+                    headerName: "Email", field: "respondent_email", sortable: true, filter: 'agTextColumnFilter', width: 220
                 }
             ];
             

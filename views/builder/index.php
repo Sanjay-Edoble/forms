@@ -17,6 +17,7 @@
             <a href="/forms/<?= $form['id'] ?>/responses">Responses <span class="edf-badge edf-badge-neutral">{{ responseCount }}</span></a>
         </div>
         <div class="edf-builder-actions">
+            <span style="font-size: 13px; color: var(--edf-text-muted); margin-right: 12px;"><i class="bi bi-clock"></i> Last edited: <?= date('M j, Y, g:i A', strtotime($form['updated_at'])) ?></span>
             <span class="save-status" :class="saveStatus">{{ saveMessage }}</span>
             <button @click="openThemePanel" class="edf-btn edf-btn-ghost edf-btn-icon" title="Customize Theme"><i class="bi bi-palette"></i></button>
             <a href="/forms/<?= $form['id'] ?>/preview" target="_blank" class="edf-btn edf-btn-ghost edf-btn-icon" title="Preview"><i class="bi bi-eye"></i></a>
@@ -65,6 +66,7 @@
                                     <option value="time">Time</option>
                                     <option value="phone">Phone Number</option>
                                     <option value="email">Email</option>
+                                    <option value="section">Section Break</option>
                                 </optgroup>
                             </select>
                         </div>
@@ -78,10 +80,20 @@
 
                         <!-- Multiple Choice / Checkboxes / Dropdown -->
                         <div v-if="['multiple_choice', 'checkboxes', 'dropdown'].includes(question.type)" class="options-list">
-                            <div v-for="(opt, oIdx) in question.options" :key="oIdx" class="option-item">
-                                <i :class="getOptionIcon(question.type)" class="option-icon"></i>
-                                <input type="text" v-model="opt.value" class="option-input" placeholder="Option" @change="debouncedSave" @keyup.enter="addOption(question)">
-                                <button @click.stop="removeOption(question, oIdx)" class="remove-option-btn" v-if="question.options.length > 1"><i class="bi bi-x"></i></button>
+                            <div v-for="(opt, oIdx) in question.options" :key="oIdx" class="option-item" style="flex-wrap:wrap;">
+                                <div class="d-flex align-center w-100 gap-2">
+                                    <i :class="getOptionIcon(question.type)" class="option-icon"></i>
+                                    <input type="text" v-model="opt.value" class="option-input flex-1" placeholder="Option" @change="debouncedSave" @keyup.enter="addOption(question)">
+                                    <button @click.stop="removeOption(question, oIdx)" class="remove-option-btn" v-if="question.options.length > 1"><i class="bi bi-x"></i></button>
+                                </div>
+                                <div class="d-flex align-center w-100 gap-2 mt-2" v-if="question.logic_enabled && ['multiple_choice', 'dropdown'].includes(question.type)">
+                                    <i class="bi bi-arrow-return-right text-muted" style="margin-left: 24px;"></i>
+                                    <select v-model="opt.jumpTo" class="edf-input edf-input-sm" style="flex-1; font-size:13px;" @change="debouncedSave">
+                                        <option value="">Continue to next section</option>
+                                        <option v-for="sec in sectionList" :key="sec.id" :value="sec.id">Go to section: {{ sec.title || 'Untitled Section' }}</option>
+                                        <option value="submit">Submit form</option>
+                                    </select>
+                                </div>
                             </div>
                             <div class="option-item add-option" @click="addOption(question)">
                                 <i :class="getOptionIcon(question.type)" class="option-icon"></i>
@@ -123,6 +135,18 @@
                                 </span>
                             </div>
                         </div>
+
+                        <!-- Section Logic Jump -->
+                        <div v-if="question.type === 'section'" class="section-editor" style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--edf-border);">
+                            <div class="d-flex align-center gap-2">
+                                <span style="font-size: 13px; font-weight: 600; color: var(--edf-text-muted);">After section {{ getSectionIndex(question.id) + 1 }}:</span>
+                                <select v-model="question.jumpTo" class="edf-input" style="flex: 1;" @change="debouncedSave">
+                                    <option value="">Continue to next section</option>
+                                    <option v-for="sec in sectionList" :key="sec.id" :value="sec.id" :disabled="sec.id === question.id">Go to section {{ getSectionIndex(sec.id) + 1 }} ({{ sec.title || 'Untitled Section' }})</option>
+                                    <option value="submit">Submit form</option>
+                                </select>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Question Footer (Actions) -->
@@ -131,8 +155,14 @@
                             <button @click="duplicateQuestion(index)" class="action-btn" title="Duplicate"><i class="bi bi-copy"></i></button>
                             <button @click="deleteQuestion(index)" class="action-btn" title="Delete"><i class="bi bi-trash"></i></button>
                         </div>
-                        <div class="footer-right">
-                            <label class="edf-toggle">
+                        <div class="footer-right d-flex align-center gap-3">
+                            <label class="edf-toggle" v-if="['multiple_choice', 'dropdown'].includes(question.type)">
+                                <input type="checkbox" v-model="question.logic_enabled" @change="debouncedSave">
+                                <div class="edf-toggle-track"></div>
+                                <span class="edf-toggle-label">Logic Jumps</span>
+                            </label>
+                            
+                            <label class="edf-toggle" v-if="question.type !== 'section'">
                                 <input type="checkbox" v-model="question.required" @change="debouncedSave">
                                 <div class="edf-toggle-track"></div>
                                 <span class="edf-toggle-label">Required</span>
@@ -146,7 +176,7 @@
             <div class="floating-actions" :class="{'visible': true}">
                 <button @click="addQuestion" class="fab-btn" title="Add Question"><i class="bi bi-plus-circle"></i></button>
                 <button class="fab-btn" title="Add Title/Description"><i class="bi bi-type"></i></button>
-                <button class="fab-btn" title="Add Section"><i class="bi bi-view-stacked"></i></button>
+                <button @click="addSection" class="fab-btn" title="Add Section"><i class="bi bi-view-stacked"></i></button>
             </div>
             
             <div style="height:100px;"></div>
@@ -216,6 +246,15 @@ const app = Vue.createApp({
             sortableInst: null
         }
     },
+    computed: {
+        sectionList() {
+            // First section is implicit (Section 1) - actually, in our logic, section break is the START of a new section.
+            // Wait, the public form puts everything before the first section break into Section 1.
+            // Then each section break creates a NEW section. 
+            // So if there are N section breaks, there are N+1 sections.
+            return this.questions.filter(q => q.type === 'section');
+        }
+    },
     mounted() {
         if (this.questions.length === 0) {
             this.addQuestion();
@@ -227,6 +266,9 @@ const app = Vue.createApp({
         this.initSortable();
     },
     methods: {
+        getSectionIndex(sectionId) {
+            return this.sectionList.findIndex(s => s.id === sectionId) + 1; // +1 because index 0 is Section 2 (Section 1 is implicit)
+        },
         initSortable() {
             const el = document.getElementById('questions-list');
             this.sortableInst = new Sortable(el, {
@@ -250,6 +292,29 @@ const app = Vue.createApp({
                 title: '',
                 required: false,
                 options: [{ value: 'Option 1' }]
+            };
+            
+            let idx = this.questions.length;
+            if (this.activeQuestion) {
+                const curIdx = this.questions.findIndex(x => x.id === this.activeQuestion);
+                if (curIdx !== -1) idx = curIdx + 1;
+            }
+            
+            this.questions.splice(idx, 0, q);
+            this.activeQuestion = q.id;
+            this.saveSchema();
+            
+            setTimeout(() => {
+                const el = document.querySelector('.question-card.active');
+                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 50);
+        },
+        addSection() {
+            const q = {
+                id: this.generateId(),
+                type: 'section',
+                title: 'Untitled Section',
+                description: ''
             };
             
             let idx = this.questions.length;

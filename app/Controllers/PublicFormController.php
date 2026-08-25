@@ -96,10 +96,11 @@ class PublicFormController
         $theme = json_decode($form['theme'] ?? '{}', true);
 
         echo view('forms.public', [
-            'form'     => $form,
-            'schema'   => $schema,
-            'settings' => $settings,
-            'theme'    => $theme,
+            'form'          => $form,
+            'schema'        => $schema,
+            'settings'      => $settings,
+            'theme'         => $theme,
+            'verifiedEmail' => $_SESSION['form_' . $params['id'] . '_email'] ?? null,
         ], 'layouts.public');
         exit;
     }
@@ -236,6 +237,29 @@ class PublicFormController
 
             if ($email && ($settings['collect_email'] ?? false)) {
                 $mailService->sendRespondentConfirmation($email, $form);
+            }
+
+            // Fire Webhook
+            if (!empty($settings['webhook_url'])) {
+                $payload = json_encode([
+                    'form_id' => $formId,
+                    'form_title' => $form['title'],
+                    'respondent_email' => $email,
+                    'answers' => $answers,
+                    'submitted_at' => date('Y-m-d H:i:s'),
+                ]);
+
+                // Fire and forget using cURL (non-blocking if we set timeout low, but for simplicity we'll just run it)
+                $ch = curl_init($settings['webhook_url']);
+                curl_setopt_array($ch, [
+                    CURLOPT_POST => true,
+                    CURLOPT_POSTFIELDS => $payload,
+                    CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
+                    CURLOPT_RETURNTRANSFER => true,
+                    CURLOPT_TIMEOUT => 3 // 3 second timeout so we don't hang the user
+                ]);
+                curl_exec($ch);
+                curl_close($ch);
             }
 
             if ($request->isAjax()) {

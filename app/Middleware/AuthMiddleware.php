@@ -21,6 +21,17 @@ class AuthMiddleware
             Session::set('intended_url', $request->path());
             redirect('/login');
         }
+
+        // Ensure workspaces are loaded for backwards compatibility with active sessions
+        if (!Session::has('workspaces') || !Session::has('current_workspace_id')) {
+            $workspaceService = new \App\Services\WorkspaceService();
+            $workspaces = $workspaceService->getUserWorkspaces(Session::get('user')['id']);
+            if (!empty($workspaces)) {
+                Session::set('workspaces', $workspaces);
+                Session::set('current_workspace_id', $workspaces[0]['id']);
+            }
+        }
+
         return true;
     }
 }

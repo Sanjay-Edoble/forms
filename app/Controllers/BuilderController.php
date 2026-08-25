@@ -23,6 +23,11 @@ class BuilderController
             redirect('/forms');
         }
 
+        if (current_user_role() === 'viewer') {
+            flash('error', 'You do not have permission to edit this form.');
+            redirect('/forms');
+        }
+
         // Parse JSON fields
         $schema = json_decode($form['schema'] ?? '{}', true);
         $settings = json_decode($form['settings'] ?? '{}', true);

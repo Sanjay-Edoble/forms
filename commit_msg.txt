@@ -1,0 +1,55 @@
+Update Edoble Forms with Multiple Features (Phases 1-3)
+
+1. Default Settings Update
+- Update FormService.php to set require_email, verify_email_magic_link, and collect_email to true by default for all new forms.
+
+2. Dashboard Updates
+- Change form card click behavior in views/dashboard/index.php to route to /edit.
+- Add "Delete" (Move to Trash) option in the 3-dot menu on the dashboard.
+
+3. Responses Sheet (Data Grid)
+- Update views/responses/index.php to ensure Timestamp is the 1st column.
+- Ensure Email is the 2nd column by default for all forms.
+
+4. Conditional Logic (Logic Jumps)
+- Update schema definition to support Section Break question type.
+- Add "Add Section" button and logic to Builder UI (views/builder/index.php).
+- Add "Logic Jumps" toggle and configuration UI to multiple-choice/dropdown options in Builder UI.
+- Update public form renderer (views/forms/public.php) to paginate by sections.
+- Implement nextSection() evaluation of logic jumps to navigate dynamically.
+
+5. Team Workspaces
+- Implement database schema/entities for Workspaces and Workspace Members.
+- Update forms logic (FormService.php) to belong to and be filtered by workspaces.
+- Initialize default workspaces on login/registration via AuthService.
+- Implement Workspace Switcher UI in the application layout/sidebar.
+- Create Workspace settings page to allow users to create new workspaces.
+- Add UI for users to create workspaces, switch workspaces, and invite team members.
+
+6. Feedback & Enhancements
+- Add "Last edited at" timestamp to the form builder header.
+- Implement section-level conditional logic jumps (allow "After section X, go to section Y").
+- Streamline Email Gate: hide email input on the form if the respondent is already verified.
+- Bugfix: Form card click in dashboard/list redirecting to response page instead of edit page.
+- Bugfix: Three-dot dropdown menu blocked by event bubbling in form cards.
+- Bugfix: Workspace session data not loaded for users with active sessions.
+
+7. Phase 1: Integrations & Analytics
+- Advanced Visual Analytics: Add Chart.js to render pie and bar charts in the Analytics tab.
+- Webhooks: Add a Webhook URL input to form settings.
+- Webhooks: Fire non-blocking cURL POST requests to the webhook URL on successful form submission.
+- Delete Permanently shortcut: Add the permanent delete option directly to the 3-dot dropdowns in dashboard and form lists.
+
+8. Phase 2: Multi-page Forms with Animations
+- Add "Presentation Mode" setting in views/forms/settings.php.
+- Update SettingsController to save presentation_mode.
+- Update views/forms/public.php Vue instance to handle currentQuestionGlobalIndex.
+- Implement Next/Previous buttons and animations in views/forms/public.php.
+
+9. Phase 3: Granular Team Permissions
+- Add members list and roles to views/settings/workspaces.php.
+- Add invite form and routes (/settings/workspaces/{id}/invite).
+- Update WorkspaceService to handle pending invites and roles.
+- Update AuthService to set current_workspace_role in session.
+- Implement Role-Based Access Control in UI and Controllers.
+- Enforce role-based access in FormService and Controllers.

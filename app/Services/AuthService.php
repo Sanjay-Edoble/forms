@@ -150,5 +150,16 @@ class AuthService
             'display_name' => $userData['display_name'] ?? '',
             'status'       => $userData['status'] ?? 'active',
         ]);
+
+        // Initialize Workspaces and Process Invites
+        $workspaceService = new WorkspaceService();
+        $workspaceService->processPendingInvites($userData['email'], $userData['id']);
+        
+        $workspaces = $workspaceService->getUserWorkspaces($userData['id']);
+        if (!empty($workspaces)) {
+            Session::set('workspaces', $workspaces);
+            Session::set('current_workspace_id', $workspaces[0]['id']);
+            Session::set('current_workspace_role', $workspaces[0]['my_role']);
+        }
     }
 }

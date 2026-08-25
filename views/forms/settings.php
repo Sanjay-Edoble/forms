@@ -62,6 +62,17 @@
                 
                 <div class="d-flex justify-between align-center mb-3 pb-3" style="border-bottom:1px solid var(--edf-border);">
                     <div>
+                        <div style="font-weight:600;">Presentation Mode (One question per page)</div>
+                        <div class="edf-form-help">Displays questions one at a time with smooth sliding animations, instead of a scrolling list.</div>
+                    </div>
+                    <label class="edf-toggle">
+                        <input type="checkbox" name="presentation_mode" value="1" <?= !empty($settings['presentation_mode']) ? 'checked' : '' ?>>
+                        <div class="edf-toggle-track"></div>
+                    </label>
+                </div>
+                
+                <div class="d-flex justify-between align-center mb-3 pb-3" style="border-bottom:1px solid var(--edf-border);">
+                    <div>
                         <div style="font-weight:600;">Show progress bar</div>
                     </div>
                     <label class="edf-toggle">
@@ -83,6 +94,14 @@
                 <div class="edf-form-group">
                     <label class="edf-label">Confirmation message</label>
                     <textarea name="confirmation_message" class="edf-input"><?= e($settings['confirmation_message'] ?? 'Your response has been recorded.') ?></textarea>
+                </div>
+                
+                <h3 class="edf-card-title mt-4 mb-3">Integrations</h3>
+
+                <div class="edf-form-group mb-3 pb-3">
+                    <label class="edf-label">Webhook URL</label>
+                    <input type="url" name="webhook_url" class="edf-input" value="<?= e($settings['webhook_url'] ?? '') ?>" placeholder="https://api.example.com/webhook">
+                    <div class="edf-form-help">Sends a JSON POST request with form data whenever a respondent submits the form.</div>
                 </div>
                 
                 <div class="mt-3 text-right">

@@ -32,7 +32,7 @@
 <?php else: ?>
 <div class="edf-forms-grid">
     <?php foreach ($forms as $form): ?>
-    <div class="edf-form-card" onclick="window.location.href='/forms/<?= $form['id'] ?>/edit'">
+    <div class="edf-form-card" onclick="if(!event.target.closest('.edf-dropdown')){ window.location.href='/forms/<?= $form['id'] ?>/<?= current_user_role() !== 'viewer' ? 'edit' : 'responses' ?>'; }">
         <div class="edf-form-card-header"></div>
         <div class="edf-form-card-body">
             <div class="d-flex justify-between align-start mb-2">
@@ -42,11 +42,14 @@
                         <?= ucfirst($form['status'] ?? 'draft') ?>
                     </div>
                 </div>
-                <div class="edf-dropdown" onclick="event.stopPropagation()">
+                <div class="edf-dropdown">
                     <button class="edf-btn-ghost edf-btn-icon" data-dropdown><i class="bi bi-three-dots-vertical"></i></button>
                     <div class="edf-dropdown-menu">
+                        <?php if (current_user_role() !== 'viewer'): ?>
                         <a href="/forms/<?= $form['id'] ?>/edit" class="edf-dropdown-item"><i class="bi bi-pencil"></i> Edit Form</a>
+                        <?php endif; ?>
                         <a href="/forms/<?= $form['id'] ?>/responses" class="edf-dropdown-item"><i class="bi bi-inboxes"></i> Responses</a>
+                        <?php if (current_user_role() !== 'viewer'): ?>
                         <a href="/forms/<?= $form['id'] ?>/share" class="edf-dropdown-item"><i class="bi bi-share"></i> Share</a>
                         <div class="edf-dropdown-divider"></div>
                         <form method="POST" action="/forms/<?= $form['id'] ?>/duplicate" style="margin:0;">
@@ -55,8 +58,15 @@
                         </form>
                         <form method="POST" action="/forms/<?= $form['id'] ?>/delete" style="margin:0;" onsubmit="return confirm('Move to trash?');">
                             <?= csrf_field() ?>
-                            <button type="submit" class="edf-dropdown-item danger"><i class="bi bi-trash"></i> Move to Trash</button>
+                            <button type="submit" class="edf-dropdown-item"><i class="bi bi-trash"></i> Delete</button>
                         </form>
+                        <?php if (current_user_role() === 'admin'): ?>
+                        <form method="POST" action="/trash/<?= $form['id'] ?>/delete" style="margin:0;" onsubmit="return confirm('Permanently delete this form? This cannot be undone.');">
+                            <?= csrf_field() ?>
+                            <button type="submit" class="edf-dropdown-item danger"><i class="bi bi-trash3-fill"></i> Delete Permanently</button>
+                        </form>
+                        <?php endif; ?>
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>

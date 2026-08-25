@@ -39,6 +39,12 @@ class FormController
 
     public function create(Request $request, array $params): void
     {
+        if (current_user_role() === 'viewer') {
+            flash('error', 'You do not have permission to create forms.');
+            redirect('/forms');
+            return;
+        }
+
         echo view('forms.create', [
             'pageTitle' => 'Create Form',
         ], 'layouts.app');
@@ -47,6 +53,12 @@ class FormController
 
     public function store(Request $request, array $params): void
     {
+        if (current_user_role() === 'viewer') {
+            flash('error', 'You do not have permission to create forms.');
+            redirect('/forms');
+            return;
+        }
+
         $title = trim($request->input('title', 'Untitled Form'));
         $templateId = $request->input('template_id', '');
 
@@ -75,6 +87,12 @@ class FormController
 
     public function duplicate(Request $request, array $params): void
     {
+        if (current_user_role() === 'viewer') {
+            flash('error', 'You do not have permission to duplicate forms.');
+            redirect('/forms');
+            return;
+        }
+
         $result = $this->formService->duplicate($params['id']);
 
         if ($result['success'] ?? false) {
@@ -89,6 +107,12 @@ class FormController
 
     public function delete(Request $request, array $params): void
     {
+        if (current_user_role() === 'viewer') {
+            flash('error', 'You do not have permission to delete forms.');
+            redirect('/forms');
+            return;
+        }
+
         $this->formService->trash($params['id']);
         flash('success', 'Form moved to trash.');
         redirect('/forms');
@@ -96,6 +120,12 @@ class FormController
 
     public function updateStatus(Request $request, array $params): void
     {
+        if (current_user_role() === 'viewer') {
+            flash('error', 'You do not have permission to update form status.');
+            redirect('/forms');
+            return;
+        }
+
         $status = $request->input('status', '');
         $result = $this->formService->setStatus($params['id'], $status);
 
@@ -110,12 +140,22 @@ class FormController
 
     public function publish(Request $request, array $params): void
     {
+        if (current_user_role() === 'viewer') {
+            Response::json(['success' => false, 'message' => 'Permission denied'], 403);
+            return;
+        }
+
         $result = $this->formService->setStatus($params['id'], 'published');
         Response::json($result);
     }
 
     public function unpublish(Request $request, array $params): void
     {
+        if (current_user_role() === 'viewer') {
+            Response::json(['success' => false, 'message' => 'Permission denied'], 403);
+            return;
+        }
+
         $result = $this->formService->setStatus($params['id'], 'draft');
         Response::json($result);
     }
