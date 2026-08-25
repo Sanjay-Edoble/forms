@@ -51,6 +51,25 @@
     .fade-slide-enter-active, .fade-slide-leave-active { transition: all 0.4s ease; }
     .fade-slide-enter-from { opacity: 0; transform: translateY(20px); }
     .fade-slide-leave-to { opacity: 0; transform: translateY(-20px); position: absolute; width: 100%; }
+
+    .form-navigation-footer {
+        display: flex; justify-content: space-between; align-items: center;
+        margin-top: 24px; padding-top: 16px;
+    }
+    .back-btn {
+        width: 44px; height: 44px; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        background: transparent; border: none; color: #64748b; cursor: pointer;
+        transition: background 0.2s, color 0.2s;
+    }
+    .back-btn:hover { background: #f1f5f9; color: #0f172a; }
+
+    @media (max-width: 600px) {
+        .form-card { padding: 24px 20px; margin-bottom: 16px; }
+        .form-title { font-size: 26px; }
+        .q-title { font-size: 15px; }
+        body { padding: 12px; }
+    }
 </style>
 <?php \App\Core\View::endSection(); ?>
 
@@ -182,15 +201,16 @@
                 </div>
             </transition-group>
 
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:24px;">
-                <div class="d-flex gap-2">
-                    <button type="button" class="edf-btn edf-btn-secondary" v-if="showBackButton" @click="prevQuestionOrSection">Back</button>
-                    <button type="button" class="submit-btn" v-if="!isLastQuestionOrSection && !nextIsSubmit" @click="nextQuestionOrSection">Next</button>
-                    <button type="submit" class="submit-btn" :disabled="isSubmitting" v-else>
-                        {{ isSubmitting ? 'Submitting...' : 'Submit' }}
-                    </button>
-                </div>
-                <span style="font-size:13px; color:#64748b;">Never submit passwords through forms.</span>
+            <div class="form-navigation-footer">
+                <button type="button" class="back-btn" v-if="showBackButton" @click="prevQuestionOrSection" title="Back">
+                    <i class="bi bi-arrow-left" style="font-size: 20px;"></i>
+                </button>
+                <div v-else style="width: 44px;"></div>
+                
+                <button type="button" class="submit-btn" v-if="!isLastQuestionOrSection && !nextIsSubmit" @click="nextQuestionOrSection">Next</button>
+                <button type="submit" class="submit-btn" :disabled="isSubmitting" v-else>
+                    {{ isSubmitting ? 'Submitting...' : 'Submit' }}
+                </button>
             </div>
         </template>
     </form>
