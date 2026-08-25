@@ -66,7 +66,22 @@
 <?php else: ?>
 
 <div id="form-app" v-cloak>
-    <form @submit.prevent="submitForm">
+    <!-- Success End Card -->
+    <div v-if="isSubmitted" class="form-card form-header" style="text-align: center; padding: 60px 30px;">
+        <h1 class="form-title"><?= e($form['title']) ?></h1>
+        <div class="form-desc" style="font-size: 18px; margin-top: 16px; margin-bottom: 24px; color: #334155;">
+            {{ confirmationMessage }}
+        </div>
+        
+        <?php if (empty($settings['limit_one_response'])): ?>
+            <div style="margin-top: 32px; padding-top: 24px; border-top: 1px solid #e2e8f0;">
+                <a href="javascript:void(0)" @click="resetForm" style="color: var(--form-primary); text-decoration: none; font-weight: 500; font-size: 15px;">Submit another response</a>
+            </div>
+        <?php endif; ?>
+    </div>
+
+    <!-- Form Interface -->
+    <form @submit.prevent="submitForm" v-else>
         <div class="form-card form-header">
             <h1 class="form-title"><?= e($form['title']) ?></h1>
             <div class="form-desc" v-if="description">{{ description }}</div>
@@ -179,11 +194,13 @@ const app = Vue.createApp({
         
         return {
             description: <?= json_encode($form['description']) ?>,
+            confirmationMessage: settings.confirmation_message || 'Your response has been recorded.',
             questions: schema.questions || [],
             collectEmail: settings.collect_email || false,
             answers: answers,
             serverErrors: initialErrors,
-            isSubmitting: false
+            isSubmitting: false,
+            isSubmitted: false
         }
     },
     methods: {
@@ -194,6 +211,16 @@ const app = Vue.createApp({
         },
         handleCheckbox(qId) {
             // Vue v-model array binding handles the rest
+        },
+        resetForm() {
+            // Reset answers
+            if (this.collectEmail) this.answers._email = '';
+            (this.questions || []).forEach(q => {
+                this.answers[q.id] = (q.type === 'checkboxes') ? [] : '';
+            });
+            this.serverErrors = {};
+            this.isSubmitted = false;
+            window.scrollTo(0, 0);
         },
         submitForm(e) {
             if (this.isSubmitting) return;
@@ -215,7 +242,8 @@ const app = Vue.createApp({
             .then(data => {
                 this.isSubmitting = false;
                 if (data.success) {
-                    window.location.reload();
+                    this.isSubmitted = true;
+                    window.scrollTo(0, 0);
                 } else {
                     if (data.errors) this.serverErrors = data.errors;
                     else this.serverErrors = { _general: data.message };
