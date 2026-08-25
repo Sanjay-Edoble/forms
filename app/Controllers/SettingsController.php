@@ -29,9 +29,10 @@ class SettingsController
     {
         $formService = new FormService();
         $settings = [
-            'require_email'        => (bool) $request->input('require_email'),
-            'limit_one_response'   => (bool) $request->input('limit_one_response'),
-            'show_progress'        => (bool) $request->input('show_progress'),
+            'require_email'           => (bool) $request->input('require_email'),
+            'limit_one_response'      => (bool) $request->input('limit_one_response'),
+            'verify_email_magic_link' => (bool) $request->input('verify_email_magic_link'),
+            'show_progress'           => (bool) $request->input('show_progress'),
             'shuffle_questions'    => (bool) $request->input('shuffle_questions'),
             'confirmation_message' => $request->input('confirmation_message', 'Your response has been recorded.'),
         ];

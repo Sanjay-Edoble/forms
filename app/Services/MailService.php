@@ -88,4 +88,35 @@ class MailService
             Logger::error('Failed to send respondent confirmation', ['error' => $e->getMessage()]);
         }
     }
+
+    /**
+     * Send a Magic Link for form verification.
+     */
+    public function sendMagicLink(string $email, string $magicLink, string $formTitle, string $contactEmail): void
+    {
+        $html = <<<HTML
+        <div style="font-family:'Inter',Arial,sans-serif;max-width:560px;margin:0 auto;padding:20px;">
+            <div style="text-align:center;margin-bottom:24px;">
+                <div style="display:inline-block;width:40px;height:40px;border-radius:10px;background:#6366f1;color:#fff;font-weight:800;font-size:18px;line-height:40px;text-align:center;">E</div>
+            </div>
+            <h2 style="color:#111;font-size:18px;margin:0 0 8px;text-align:center;">Form Access Link</h2>
+            <p style="color:#6b7280;font-size:15px;margin:0 0 24px;text-align:center;">You requested a secure link to access the form: <strong>{$formTitle}</strong>.</p>
+            
+            <div style="text-align:center;margin:32px 0;">
+                <a href="{$magicLink}" style="display:inline-block;padding:14px 28px;background:#6366f1;color:#fff;text-decoration:none;border-radius:8px;font-weight:600;font-size:16px;">Click Here to Access Form</a>
+            </div>
+
+            <p style="color:#6b7280;font-size:14px;margin-top:32px;text-align:center;">This link is valid for 1 hour. Please do not forward this email to anyone else.</p>
+            <p style="color:#9ca3af;font-size:12px;margin-top:16px;text-align:center;">If you did not request this, you can safely ignore this email.</p>
+            <p style="color:#9ca3af;font-size:11px;margin-top:32px;text-align:center;">Sent by Edoble Forms</p>
+        </div>
+        HTML;
+
+        try {
+            $this->client->sendMail($email, "Secure Link: {$formTitle}", $html);
+            Logger::info('Magic link sent', ['to' => $email]);
+        } catch (\Exception $e) {
+            Logger::error('Failed to send magic link', ['error' => $e->getMessage()]);
+        }
+    }
 }

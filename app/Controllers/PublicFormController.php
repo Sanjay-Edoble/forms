@@ -36,6 +36,26 @@ class PublicFormController
         }
 
         $settings = json_decode($form['settings'] ?? '{}', true);
+        
+        // --- Magic Link Verification Check ---
+        if ($request->input('token') && $request->input('sig')) {
+            $token = $request->input('token');
+            $sig = $request->input('sig');
+            
+            $expectedSig = hash_hmac('sha256', $token, $_ENV['APP_KEY'] ?? 'secret');
+            if (hash_equals($expectedSig, $sig)) {
+                $payload = json_decode(base64_decode($token), true);
+                if ($payload && $payload['form_id'] === $params['id'] && $payload['exp'] > time()) {
+                    $_SESSION['form_' . $params['id'] . '_email'] = $payload['email'];
+                    $_SESSION['form_' . $params['id'] . '_email_verified'] = true;
+                    redirect("/f/{$params['id']}");
+                } else {
+                    flash('error', 'The magic link has expired or is invalid. Please request a new one.');
+                    redirect("/f/{$params['id']}");
+                }
+            }
+        }
+
         $now = date('Y-m-d H:i:s');
         if (!empty($settings['start_date']) && $now < $settings['start_date']) {
             echo view('forms.closed', ['message' => 'This form is not yet open for responses.'], 'layouts.public');
@@ -50,8 +70,11 @@ class PublicFormController
         if (!empty($settings['require_email'])) {
             $sessionKey = 'form_' . $params['id'] . '_email';
             $respondentEmail = $_SESSION[$sessionKey] ?? null;
+            
+            $isVerified = $_SESSION['form_' . $params['id'] . '_email_verified'] ?? false;
+            $needsVerification = !empty($settings['verify_email_magic_link']);
 
-            if (!$respondentEmail) {
+            if (!$respondentEmail || ($needsVerification && !$isVerified)) {
                 echo view('forms.gate', ['form' => $form], 'layouts.public');
                 exit;
             }
@@ -86,11 +109,34 @@ class PublicFormController
      */
     public function gate(Request $request, array $params): void
     {
-        $email = $request->input('respondent_email');
+        $formId = $params['id'];
+        $email = filter_var($request->input('respondent_email'), FILTER_SANITIZE_EMAIL);
+        
         if ($email) {
-            $_SESSION['form_' . $params['id'] . '_email'] = filter_var($email, FILTER_SANITIZE_EMAIL);
+            $form = $this->formService->getById($formId);
+            $settings = json_decode($form['settings'] ?? '{}', true);
+            
+            if (!empty($settings['verify_email_magic_link'])) {
+                $tokenPayload = base64_encode(json_encode([
+                    'email'   => $email,
+                    'form_id' => $formId,
+                    'exp'     => time() + 3600 // 1 hour expiry
+                ]));
+                $sig = hash_hmac('sha256', $tokenPayload, $_ENV['APP_KEY'] ?? 'secret');
+                
+                $magicLink = url("/f/{$formId}?token={$tokenPayload}&sig={$sig}");
+                
+                $mailService = new MailService();
+                $contactEmail = $_ENV['MAIL_FROM_ADDRESS'] ?? 'hello@edoble.in';
+                $mailService->sendMagicLink($email, $magicLink, $form['title'] ?? 'Form', $contactEmail);
+                
+                flash('magic_link_sent', true);
+            } else {
+                $_SESSION['form_' . $formId . '_email'] = $email;
+                $_SESSION['form_' . $formId . '_email_verified'] = true;
+            }
         }
-        redirect("/f/{$params['id']}");
+        redirect("/f/{$formId}");
     }
 
     /**
@@ -133,6 +179,14 @@ class PublicFormController
 
         // Check for duplicate submissions
         $sessionEmail = $_SESSION['form_' . $formId . '_email'] ?? null;
+        $isVerified = $_SESSION['form_' . $formId . '_email_verified'] ?? false;
+        $needsVerification = !empty($settings['verify_email_magic_link']);
+        
+        if ($needsVerification && !$isVerified) {
+            if ($request->isAjax()) Response::json(['success' => false, 'message' => 'Email verification required.'], 403);
+            flash('error', 'Email verification required.');
+            redirect("/f/{$formId}");
+        }
         
         if (!empty($settings['limit_one_response'])) {
             if (!$sessionEmail) {

@@ -47,6 +47,17 @@
                     </label>
                 </div>
                 
+                <div class="d-flex justify-between align-center mb-3 pb-3" style="border-bottom:1px solid var(--edf-border);">
+                    <div>
+                        <div style="font-weight:600;">Verify email via Magic Link</div>
+                        <div class="edf-form-help">Sends a unique link to the respondent's email to verify ownership. Requires "Require Email to Start" to be enabled.</div>
+                    </div>
+                    <label class="edf-toggle">
+                        <input type="checkbox" name="verify_email_magic_link" value="1" <?= !empty($settings['verify_email_magic_link']) ? 'checked' : '' ?>>
+                        <div class="edf-toggle-track"></div>
+                    </label>
+                </div>
+                
                 <h3 class="edf-card-title mt-4 mb-3">Presentation</h3>
                 
                 <div class="d-flex justify-between align-center mb-3 pb-3" style="border-bottom:1px solid var(--edf-border);">
