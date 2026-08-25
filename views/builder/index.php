@@ -21,8 +21,21 @@
             <span class="save-status" :class="saveStatus">{{ saveMessage }}</span>
             <button @click="openThemePanel" class="edf-btn edf-btn-ghost edf-btn-icon" title="Customize Theme"><i class="bi bi-palette"></i></button>
             <a href="/forms/<?= $form['id'] ?>/preview" target="_blank" class="edf-btn edf-btn-ghost edf-btn-icon" title="Preview"><i class="bi bi-eye"></i></a>
-            <button @click="publishForm" class="edf-btn edf-btn-primary" v-if="status !== 'published'"><i class="bi bi-rocket"></i> Publish</button>
-            <button @click="unpublishForm" class="edf-btn edf-btn-secondary" v-if="status === 'published'"><i class="bi bi-pause-circle"></i> Unpublish</button>
+            
+            <div class="edf-dropdown" style="display:inline-block;">
+                <button class="edf-btn edf-btn-ghost edf-btn-icon" data-dropdown><i class="bi bi-three-dots-vertical"></i></button>
+                <div class="edf-dropdown-menu">
+                    <a href="/forms/<?= $form['id'] ?>/responses" class="edf-dropdown-item"><i class="bi bi-inboxes"></i> View Responses</a>
+                    <div class="edf-dropdown-divider"></div>
+                    <form method="POST" action="/forms/<?= $form['id'] ?>/delete" style="margin:0;" onsubmit="return confirm('Move this form to trash?');">
+                        <?= csrf_field() ?>
+                        <button type="submit" class="edf-dropdown-item danger"><i class="bi bi-trash"></i> Delete Form</button>
+                    </form>
+                </div>
+            </div>
+
+            <button @click="publishForm" class="edf-btn edf-btn-primary" v-if="status !== 'published'" style="margin-left: 8px;"><i class="bi bi-rocket"></i> Publish</button>
+            <button @click="unpublishForm" class="edf-btn edf-btn-secondary" v-if="status === 'published'" style="margin-left: 8px;"><i class="bi bi-pause-circle"></i> Unpublish</button>
             <a href="/forms/<?= $form['id'] ?>/share" class="edf-btn edf-btn-primary" v-if="status === 'published'"><i class="bi bi-share"></i> Share</a>
         </div>
     </div>
