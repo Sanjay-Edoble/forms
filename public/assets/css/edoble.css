@@ -236,12 +236,14 @@ a:hover { color: var(--edf-primary-hover); }
 .edf-forms-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
 .edf-form-card {
     background: var(--edf-bg-card); border: 1px solid var(--edf-border);
-    border-radius: var(--edf-radius); overflow: hidden;
+    border-radius: var(--edf-radius);
     transition: all var(--edf-transition); cursor: pointer;
 }
 .edf-form-card:hover { transform: translateY(-3px); box-shadow: var(--edf-shadow-md); border-color: var(--edf-primary); }
 .edf-form-card-header {
     height: 8px; background: linear-gradient(90deg, var(--edf-primary), #8b5cf6);
+    border-top-left-radius: calc(var(--edf-radius) - 1px);
+    border-top-right-radius: calc(var(--edf-radius) - 1px);
 }
 .edf-form-card-body { padding: 18px; }
 .edf-form-card-title { font-size: 15px; font-weight: 700; margin: 0 0 4px; color: var(--edf-text); }
