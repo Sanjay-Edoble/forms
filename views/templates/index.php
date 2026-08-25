@@ -29,10 +29,13 @@
             
             <div class="d-flex justify-between align-center mt-3">
                 <span class="edf-badge edf-badge-neutral"><?= e($tpl['category']) ?></span>
-                <form method="POST" action="/templates/<?= e($tpl['id']) ?>/use" style="margin:0;">
-                    <?= csrf_field() ?>
-                    <button type="submit" class="edf-btn edf-btn-primary edf-btn-sm">Use Template</button>
-                </form>
+                <div class="d-flex" style="gap: 8px;">
+                    <a href="/templates/<?= e($tpl['id']) ?>/preview" class="edf-btn edf-btn-ghost edf-btn-sm" target="_blank">Preview</a>
+                    <form method="POST" action="/templates/<?= e($tpl['id']) ?>/use" style="margin:0;">
+                        <?= csrf_field() ?>
+                        <button type="submit" class="edf-btn edf-btn-primary edf-btn-sm">Use Template</button>
+                    </form>
+                </div>
             </div>
         </div>
     </div>

@@ -104,6 +104,7 @@ $router->group(['middleware' => [AuthMiddleware::class, CSRFMiddleware::class]],
 
     // Templates
     $router->get('/templates', [TemplateController::class, 'index']);
+    $router->get('/templates/{id}/preview', [TemplateController::class, 'previewTemplate']);
     $router->post('/templates/{id}/use', [TemplateController::class, 'useTemplate']);
 
     // Trash

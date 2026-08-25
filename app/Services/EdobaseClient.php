@@ -74,7 +74,7 @@ class EdobaseClient
      */
     public function deleteDocument(string $collection, string $id): array
     {
-        return $this->request('DELETE', "/data/{$collection}/{$id}");
+        return $this->request('DELETE', "/data/{$collection}/{$id}", [], true);
     }
 
     /**

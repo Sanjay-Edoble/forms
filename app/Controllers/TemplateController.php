@@ -49,6 +49,44 @@ class TemplateController
         redirect('/templates');
     }
 
+    public function previewTemplate(Request $request, array $params): void
+    {
+        $templates = self::getBuiltInTemplates();
+        $template = null;
+        foreach ($templates as $t) {
+            if ($t['id'] === $params['id']) {
+                $template = $t;
+                break;
+            }
+        }
+
+        if (!$template) {
+            flash('error', 'Template not found.');
+            redirect('/templates');
+        }
+
+        // Mock a form object for the public view
+        $form = [
+            'id' => $template['id'],
+            'title' => $template['title'],
+            'description' => $template['description'],
+            'schema' => $template['schema'],
+            'settings' => $template['settings'],
+            'theme' => $template['theme'],
+            'status' => 'published'
+        ];
+
+        echo view('forms.public', [
+            'pageTitle' => $template['title'] . ' (Preview)',
+            'form' => $form,
+            'presentationMode' => false,
+            'isDraft' => false,
+            'settings' => json_decode($template['settings'], true) ?? [],
+            'theme' => json_decode($template['theme'], true) ?? [],
+        ], 'layouts.public');
+        exit;
+    }
+
     /**
      * Built-in form templates.
      */
